@@ -31,8 +31,20 @@ while True:
     rbox.send('Recolector1 conectado')
     rbox.wait()
     #rbox.read()
-    print("rbox.read ",rbox.read())
+    #print("rbox.read ",rbox.read())
+    if(rbox.read()[0] == '['):
+        rojos = rbox.read()
+        ev3.screen.print("lista roja",rojos)
+    rbox.send('rojo ok')
+    rbox.wait_new()
+    if(rbox.read()[0] == '['):
+        verdes = rbox.read()
+        ev3.screen.print("lista verde",verdes)
+    rbox.send('verde ok')
+    rbox.wait_new()    
+
     if(rbox.read()=='Recolector1 muevete'):
         robot.straight(100)
+    rbox.send('termine')
 # Write your program here.
    
