@@ -142,10 +142,59 @@ def move_along_path_greedy(coordinates, obstacles):
         current_position = closest
         visited_coordinates.append(closest)
 
-        #print(f'Camino a ({closest[0]},{closest[1]}): {path}')
+        print("Camino a :",{closest[0]},{closest[1]})
+        print({path})
         print('\n')
 
-    # Encuentra el camino de regreso al punto de inicio
+        # Direcciones posibles
+        RIGHT = 0 # Derecha
+        UP = 1  # Arriba
+        LEFT = 2 # Izquierda
+        DOWN = 3 # Abajo
+
+        # Inicializa la dirección actual del robot
+        current_direction = RIGHT
+
+        # Para cada paso en el camino
+        for i in range(len(full_path) - 1):
+            # Inicializamos la próxima dirección a None
+            next_direction = None
+            # Calculamos la diferencia en X y Y entre el paso actual y el próximo paso
+            dx = full_path[i+1][0] - full_path[i][0]
+            dy = full_path[i+1][1] - full_path[i][1]
+            # Dependiendo de la diferencia, establecemos la próxima dirección
+            if dx > 0:
+                next_direction = RIGHT
+            elif dx < 0:
+                next_direction = LEFT
+            elif dy > 0:
+                next_direction = UP
+            elif dy < 0:
+                next_direction = DOWN
+
+            # Calculamos el ángulo de giro comparando la próxima dirección con la dirección actual del robot
+            turn_angle = (next_direction - current_direction) % 4
+            # Si el ángulo de giro es 1, el robot debe girar a la derecha
+            if turn_angle == 1:
+                # Gira a la derecha
+                robot.turn(90)
+            # Si el ángulo de giro es 3, el robot debe girar a la izquierda
+            elif turn_angle == 3:
+                # Gira a la izquierda
+                robot.turn(-90)
+
+            # Actualiza la dirección actual del robot a la próxima dirección
+            current_direction = next_direction
+
+            # Mueve el robot al próximo paso
+            dx = full_path[i+1][0] - full_path[i][0]
+            dy = full_path[i+1][1] - full_path[i][1]
+            # Calculamos la distancia al próximo paso
+            distance = math.sqrt(dx**2 + dy**2) * 10  # cada unidad es mm
+            # Movemos el robot la distancia calculada
+            robot.straight(distance)
+
+    # Al finalizar el recorrido encuentra el camino de regreso al punto de inicio
     path = a_star(current_position, start_position, obstacles)
     if path is None:
         print("No se encontró un camino de regreso al inicio")
