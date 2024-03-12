@@ -11,13 +11,13 @@ import itertools
 import math
 ###################################################################################
 
-
-
 # Create your objects here.
 ev3 = EV3Brick()
 left_motor = Motor(Port.D)
 right_motor = Motor(Port.A)
 
+# SETTINGS RECOLECTOR
+robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=165)
 
 # Convierte un string a una lista de tuplas
 def string_to_coordinates(string):
