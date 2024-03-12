@@ -22,10 +22,10 @@ right_motor = Motor(Port.A)
 # Convierte un string a una lista de tuplas
 def string_to_coordinates(string):
     string = string[1:-1]
-    parts = string.split("),(")
+    parts = string.split("), (")
     coords = []
     for part in parts:
-        x, y = part.split(",")
+        x, y = part.split(", ")
         coords.append((int(x.strip("(")), int(y.strip(")"))))
     return coords
 
@@ -136,7 +136,7 @@ def move_along_path_greedy(coordinates, obstacles):
         # Encuentra el camino más corto a la coordenada más cercana
         path = a_star(current_position, closest, obstacles)
         if path is None:
-            print(f"No se encontró un camino a ({closest[0]},{closest[1]})")
+            print("No se encontró un camino a ",{closest[0]},{closest[1]})
             return
         full_path.extend(path)
         current_position = closest
@@ -148,14 +148,14 @@ def move_along_path_greedy(coordinates, obstacles):
     # Encuentra el camino de regreso al punto de inicio
     path = a_star(current_position, start_position, obstacles)
     if path is None:
-        print(f"No se encontró un camino de regreso al inicio")
+        print("No se encontró un camino de regreso al inicio")
         return
     #full_path.extend(path)
 
     return full_path
 
 
-
+#################################--Main--#####################################################
 robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=125)
 SERVER = 'Master'
 
@@ -185,10 +185,15 @@ while True:
 
     if(rbox.read()=='Recolector1 muevete'):
         #robot.straight(100)
+        
         coordinates = string_to_coordinates(rojos)
         obstacles = string_to_coordinates(verdes)
 
-full_path = move_along_path_greedy(coordinates, obstacles)
+        print(coordinates)
+        print(obstacles)
+
+        full_path = move_along_path_greedy(coordinates, obstacles)
+        print(full_path)
     rbox.send('termine')
 
    
