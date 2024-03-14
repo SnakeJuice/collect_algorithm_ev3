@@ -29,6 +29,19 @@ def string_to_coordinates(string):
         coords.append((int(x.strip("(")), int(y.strip(")"))))
     return coords
 
+def expand_obstacle(obstacle, margin):
+    x, y = obstacle
+    expanded = []
+    for dx in range(-margin, margin+1):
+        for dy in range(-margin, margin+1):
+            expanded.append((x+dx, y+dy))
+    return expanded
+
+def expand_obstacles(obstacles, margin):
+    expanded = []
+    for obstacle in obstacles:
+        expanded.extend(expand_obstacle(obstacle, margin))
+    return expanded
 
 #Mejor heuristica para movimientos en 4 direcciones
 def distance(point1, point2):
@@ -37,8 +50,11 @@ def distance(point1, point2):
 
 def get_neighbors(node):
     x, y = node
-    return [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
     # Vecinos a la izquierda, derecha, arriba y abajo
+    neighbors = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+    # Elimina los vecinos que están por debajo de y=17
+    neighbors = [(x, y) for x, y in neighbors if y >= 17]
+    return neighbors
 
 # Algoritmo A* para encontrar el camino más corto entre dos puntos
 # Complejidad O(n^2)
@@ -198,10 +214,10 @@ def move_along_path_greedy(coordinates, obstacles):
             robot.straight(step_distance)
 
     # Al finalizar el recorrido encuentra el camino de regreso al punto de inicio
-    path = a_star(current_position, start_position, obstacles)
-    if path is None:
-        print("No se encontró un camino de regreso al inicio")
-        return
+    #path = a_star(current_position, start_position, obstacles)
+    #if path is None:
+    #    print("No se encontró un camino de regreso al inicio")
+    #    return
     #full_path.extend(path)
 
     return full_path
@@ -245,8 +261,9 @@ while True:
         print(obstacles)
         print('\n')
 
-        full_path = move_along_path_greedy(coordinates, obstacles)
+        margin = 10
+        expanded_obstacles = expand_obstacles(obstacles, margin)
+        
+        full_path = move_along_path_greedy(coordinates, expanded_obstacles)
         #print(full_path)
     rbox.send('termine')
-
-   
