@@ -17,7 +17,7 @@ left_motor = Motor(Port.D)
 right_motor = Motor(Port.A)
 
 # SETTINGS RECOLECTOR
-robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=165)
+robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=220)
 
 # Convierte un string a una lista de tuplas
 def string_to_coordinates(string):
@@ -121,7 +121,7 @@ def two_opt(coordinates):
 # Algoritmo Greedy para moverse a lo largo de un camino
 # Complejidad O(n^2)
 def move_along_path_greedy(coordinates, obstacles):
-    start_position = (0,0)
+    start_position = (0,17)
     current_position = start_position
     full_path = []
     visited_coordinates = [current_position]
@@ -142,8 +142,8 @@ def move_along_path_greedy(coordinates, obstacles):
         current_position = closest
         visited_coordinates.append(closest)
 
-        print("Camino a :",{closest[0]},{closest[1]})
-        print({path})
+        print("Camino a : {}, {}".format(closest[0], closest[1]))
+        print(path)
         print('\n')
 
         # Direcciones posibles
@@ -162,6 +162,9 @@ def move_along_path_greedy(coordinates, obstacles):
             # Calculamos la diferencia en X y Y entre el paso actual y el próximo paso
             dx = full_path[i+1][0] - full_path[i][0]
             dy = full_path[i+1][1] - full_path[i][1]
+            # Si dx y dy son ambos cero, continuamos con la siguiente iteración del bucle
+            if dx == 0 and dy == 0:
+                continue
             # Dependiendo de la diferencia, establecemos la próxima dirección
             if dx > 0:
                 next_direction = RIGHT
@@ -190,9 +193,9 @@ def move_along_path_greedy(coordinates, obstacles):
             dx = full_path[i+1][0] - full_path[i][0]
             dy = full_path[i+1][1] - full_path[i][1]
             # Calculamos la distancia al próximo paso
-            distance = math.sqrt(dx**2 + dy**2) * 10  # cada unidad es mm
+            step_distance = math.sqrt(dx**2 + dy**2) * 10  # cada unidad es mm
             # Movemos el robot la distancia calculada
-            robot.straight(distance)
+            robot.straight(step_distance)
 
     # Al finalizar el recorrido encuentra el camino de regreso al punto de inicio
     path = a_star(current_position, start_position, obstacles)
@@ -240,9 +243,10 @@ while True:
 
         print(coordinates)
         print(obstacles)
+        print('\n')
 
         full_path = move_along_path_greedy(coordinates, obstacles)
-        print(full_path)
+        #print(full_path)
     rbox.send('termine')
 
    
