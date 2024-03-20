@@ -1,4 +1,23 @@
 #!/usr/bin/env pybricks-micropython
+##########################################################
+# Algoritmo de recolección y evasión para robot LEGO EV3 #
+#                                                        #
+# Autores:                                               #
+# - Cristian Anjari                                      #
+# - Marcos Medina                                        #
+#                                                        #
+# Para proyecto de Tesis 2024                            #
+#                                                        #
+# Universidad de Santiago de Chile                       #
+# Facultad de Ciencia                                    #
+#                                                        #
+# Licenciatura en Ciencia de la Computación/             #
+# Analista en Computación Científica                     #
+#                                                        #
+# Santiago, Chile                                        #
+# 03/03/2024                                             #
+##########################################################
+
 from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor, InfraredSensor, UltrasonicSensor, GyroSensor)
 from pybricks.parameters import Port, Stop, Direction, Button, Color
@@ -15,9 +34,11 @@ import math
 ev3 = EV3Brick()
 left_motor = Motor(Port.D)
 right_motor = Motor(Port.A)
+servo_motor = Motor(Port.C)
 
 # SETTINGS RECOLECTOR
-robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=250)
+robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=140)
+robot.settings(70,150,50,50)
 
 # Convierte un string a una lista de tuplas
 def string_to_coordinates(string, is_obstacle=False):
@@ -29,7 +50,7 @@ def string_to_coordinates(string, is_obstacle=False):
         x = int(x.strip("("))
         y = int(y.strip(")"))
         if is_obstacle:
-            x -= 10
+            x = abs(x - 10)
         coords.append((x, y))
     return coords
 
@@ -55,7 +76,7 @@ def distance(point1, point2):
 def get_neighbors(node):
     x, y = node
     # Vecinos a la izquierda, derecha, arriba y abajo
-    neighbors = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+    neighbors = [(x-1, y), (x+1, y), (x, y-17), (x, y+17)]
     # Elimina los vecinos que están por debajo de y=17
     neighbors = [(x, y) for x, y in neighbors if y >= 17]
     return neighbors
@@ -100,7 +121,8 @@ def a_star(start, goal, obstacles):
                 continue
 
             # Calcula el costo tentativo del vecino a través del nodo actual
-            tentative_g = g[current] + 1  # El costo de moverse a un vecino es siempre 1
+            dx, dy = neighbor[0] - current[0], neighbor[1] - current[1]
+            tentative_g = g[current] + math.sqrt(dx**2 + (dy/17)**2)  # El costo de moverse a un vecino es siempre 1
 
             # Si el vecino no está en la lista abierta o el costo tentativo es menor que el costo actual
             # actualiza el mapa de costos y agrega el vecino a la lista abierta
@@ -111,6 +133,7 @@ def a_star(start, goal, obstacles):
                 f[neighbor] = g[neighbor] + h[neighbor]
                 if neighbor not in open_list:
                     open_list.append(neighbor)
+                #print("Vecino agregado a la lista abierta: ", neighbor)
 
     # Si no se encontró un camino, devuelve None
     return None
@@ -176,16 +199,25 @@ def move_along_path_greedy(coordinates, obstacles):
         # Inicializa la dirección actual del robot
         current_direction = RIGHT
 
+        #Abre la reja
+        servo_motor.run_angle(150, 90)
+
         # Para cada paso en el camino
         for i in range(len(full_path) - 1):
+            # Obtiene las coordenadas del paso actual y el próximo paso
+            current_x, current_y = full_path[i]
+            next_x, next_y = full_path[i + 1]
+            
             # Inicializamos la próxima dirección a None
             next_direction = None
             # Calculamos la diferencia en X y Y entre el paso actual y el próximo paso
-            dx = full_path[i+1][0] - full_path[i][0]
-            dy = full_path[i+1][1] - full_path[i][1]
+            dx = next_x - current_x
+            dy = next_y - current_y
+            
             # Si dx y dy son ambos cero, continuamos con la siguiente iteración del bucle
             if dx == 0 and dy == 0:
                 continue
+            
             # Dependiendo de la diferencia, establecemos la próxima dirección
             if dx > 0:
                 next_direction = RIGHT
@@ -195,6 +227,7 @@ def move_along_path_greedy(coordinates, obstacles):
                 next_direction = UP
             elif dy < 0:
                 next_direction = DOWN
+            #print("Próxima dirección: ", next_direction)
 
             # Calculamos el ángulo de giro comparando la próxima dirección con la dirección actual del robot
             turn_angle = (next_direction - current_direction) % 4
@@ -206,20 +239,33 @@ def move_along_path_greedy(coordinates, obstacles):
             elif turn_angle == 3:
                 # Gira a la derecha
                 robot.turn(90)
-
+            
+            
+            # Si el robot debe subir o bajar en el eje Y
+            if current_x == next_x and current_y != next_y:
+                # Mueve el robot en incrementos de 17 cm en el eje Y
+                dist = math.ceil(dy / 17) * 30
+                print("Dist: ",dist)
+                robot.straight(abs(dist)) # Avanza dy/17 * 17 cm hacia arriba
+            
+        
             # Actualiza la dirección actual del robot a la próxima dirección
             current_direction = next_direction
 
             # Mueve el robot al próximo paso
             dx = full_path[i+1][0] - full_path[i][0]
             dy = full_path[i+1][1] - full_path[i][1]
+            
             # Calculamos la distancia al próximo paso
             step_distance = math.sqrt(dx**2 + dy**2) * 10  # cada unidad es mm
             
             # Movemos el robot la distancia calculada
             robot.straight(step_distance)
             
-            
+        # Luego de llegar a la coordenada objetivo
+        wait(1000)
+        #Cierra la reja
+        servo_motor.run_angle(150, -90)
         
         # Después de llegar a la coordenada objetivo, avanza 10 cm
         #robot.straight(100)
@@ -235,7 +281,7 @@ def move_along_path_greedy(coordinates, obstacles):
 
 
 #################################--Main--#####################################################
-robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=125)
+
 SERVER = 'Master'
 
 client = BluetoothMailboxClient()
