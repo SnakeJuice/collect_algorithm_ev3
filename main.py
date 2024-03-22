@@ -15,7 +15,7 @@
 # Analista en Computación Científica                     #
 #                                                        #
 # Santiago, Chile                                        #
-# 03/03/2024                                             #
+# 25/03/2024                                             #
 ##########################################################
 
 from pybricks.hubs import EV3Brick
@@ -25,7 +25,6 @@ from pybricks.tools import wait, StopWatch, DataLog
 from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile
 from pybricks.messaging import BluetoothMailboxClient, TextMailbox
-
 import itertools
 import math
 ###################################################################################
@@ -40,7 +39,16 @@ servo_motor = Motor(Port.C)
 robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=140)
 robot.settings(70,150,50,50)
 
-# Convierte un string a una lista de tuplas
+"""
+    Convierte coordenadas en formato string en una lista de tuplas.
+    
+    Parámetros:
+        string (str): El string de coordenadas convertir.
+        is_obstacle (bool): Si las coordenadas representan un obstáculo.
+        
+    Devuelve:
+        coords: Una lista de tuplas que representan las coordenadas.
+"""
 def string_to_coordinates(string, is_obstacle=False):
     string = string[1:-1]
     parts = string.split("), (")
@@ -53,8 +61,18 @@ def string_to_coordinates(string, is_obstacle=False):
             x = abs(x - 10)
         coords.append((x, y))
     return coords
+#################################################
 
-
+"""
+    Expande un obstáculo en todas las direcciones por un margen dado.
+    
+    Parámetros:
+        obstacle (tuple): Las coordenadas del obstáculo.
+        margin (int): El margen de expansión.
+        
+    Devuelve:
+        expanded: Una lista de tuplas que representan las coordenadas del obstáculo expandido.
+"""
 def expand_obstacle(obstacle, margin):
     x, y = obstacle
     expanded = []
@@ -62,19 +80,48 @@ def expand_obstacle(obstacle, margin):
         for dy in range(-margin, margin+1):
             expanded.append((x+dx, y+dy))
     return expanded
+#################################################
 
+"""
+    Expande todos los obstáculos en una lista por un margen dado.
+    
+    Parámetros:
+        obstacles (list): Una lista de tuplas que representan los obstáculos.
+        margin (int): El margen de expansión.
+        
+    Devuelve:
+        expanded: Una lista de tuplas que representan las coordenadas de los obstáculos expandidos.
+"""
 def expand_obstacles(obstacles, margin):
     expanded = []
     for obstacle in obstacles:
         expanded.extend(expand_obstacle(obstacle, margin))
     return expanded
+#################################################
 
-
-#Mejor heuristica para movimientos en 4 direcciones
+"""
+    Calcula la distancia de Manhattan entre dos puntos.
+    
+    Parámetros:
+        point1 (tuple): El primer punto.
+        point2 (tuple): El segundo punto.
+        
+    Devuelve:
+        int: La distancia de Manhattan entre los dos puntos.
+"""
 def distance(point1, point2):
-    # Calcula la distancia de Manhattan entre dos puntos
     return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
+#################################################
 
+"""
+    Obtiene los vecinos de un nodo en una cuadrícula.
+    
+    Parámetros:
+        node (tuple): Las coordenadas del nodo.
+        
+    Devuelve:
+        neighbors: Una lista de tuplas que representan las coordenadas de los vecinos.
+"""
 def get_neighbors(node):
     x, y = node
     # Vecinos a la izquierda, derecha, arriba y abajo
@@ -82,9 +129,20 @@ def get_neighbors(node):
     # Elimina los vecinos que están por debajo de y=17
     neighbors = [(x, y) for x, y in neighbors if y >= 17]
     return neighbors
+#################################################
 
-# Algoritmo A* para encontrar el camino más corto entre dos puntos
-# Complejidad O(n^2)
+"""
+    Implementa el algoritmo A* para encontrar el camino más corto entre dos puntos en una cuadrícula con obstáculos.
+    
+    Parámetros:
+        start (tuple): Las coordenadas del punto de inicio.
+        goal (tuple): Las coordenadas del punto de destino.
+        obstacles (list): Una lista de tuplas que representan los obstáculos.
+        
+    Devuelve:
+        list: Una lista de tuplas que representan el camino más corto, o None si no se encontró un camino.
+"""
+# VERIFICAR COMPLEJIDAD.
 def a_star(start, goal, obstacles):
     # Inicializa las listas abierta y cerrada
     open_list = [start]
@@ -124,7 +182,7 @@ def a_star(start, goal, obstacles):
 
             # Calcula el costo tentativo del vecino a través del nodo actual
             dx, dy = neighbor[0] - current[0], neighbor[1] - current[1]
-            tentative_g = g[current] + math.sqrt(dx**2 + (dy/17)**2)  # El costo de moverse a un vecino 
+            tentative_g = g[current] + math.sqrt(dx**2 + (dy/17)**2)  # El costo de moverse a un vecino
 
             # Si el vecino no está en la lista abierta o el costo tentativo es menor que el costo actual
             # actualiza el mapa de costos y agrega el vecino a la lista abierta
@@ -139,9 +197,19 @@ def a_star(start, goal, obstacles):
 
     # Si no se encontró un camino, devuelve None
     return None
+#################################################
 
-# Algoritmo 2-opt - Heurística de mejora de ruta
+"""
+    Implementa el algoritmo 2-opt para mejorar una ruta.
+    
+    Parámetros:
+        coordinates (list): Una lista de tuplas que representan la ruta.
+        
+    Devuelve:
+        list: Una lista de tuplas que representan la ruta optimizada.
+"""
 # Complejidad O(n^2)
+# n = numero de coordenadas
 def two_opt(coordinates):
     # Calcula la matriz de distancias
     n = len(coordinates)
@@ -149,27 +217,39 @@ def two_opt(coordinates):
 
     # Inicializa la ruta con el orden de las coordenadas
     route = list(range(n))
-
+    
     improvement = True
     while improvement:
         improvement = False
         for i in range(1, n - 1):
             for j in range(i + 1, n):
-                # Si intercambiar las ciudades i y j resulta en una ruta más corta, haz el intercambio
+                # Si intercambiar las "ciudades" i y j resulta en una ruta más corta, haz el intercambio
                 if dist[route[i-1]][route[j]] + dist[route[i]][route[(j+1)%n]] < dist[route[i-1]][route[i]] + dist[route[j]][route[(j+1)%n]]:
                     route[i:j+1] = list(reversed(route[i:j+1]))
                     improvement = True
 
     # Devuelve las coordenadas en el orden de la ruta óptima
     return [coordinates[i] for i in route]
+#################################################
 
-# Algoritmo Greedy para moverse a lo largo de un camino
-# Complejidad O(n^2)
+"""
+    Implementa un algoritmo codicioso para moverse a lo largo de un camino en una cuadrícula con obstáculos.
+    
+    Parámetros:
+        coordinates (list): Una lista de tuplas que representan el camino.
+        obstacles (list): Una lista de tuplas que representan los obstáculos.
+        
+    Devuelve:
+        list: Una lista de tuplas que representan el camino seguido, o None si no se encontró un camino.
+"""
+# Complejidad O(n^3 * m) VERIFICAR SI ESTA CORRECTO
+# n = coordenadas, m = longitud promedio del camino de A*
 def move_along_path_greedy(coordinates, obstacles):
     start_position = (0,17)
     current_position = start_position
     full_path = []
     visited_coordinates = [current_position]
+    
     # Ordena las coordenadas con el algoritmo de 2-opt
     coordinates = two_opt(coordinates)
     
@@ -258,7 +338,7 @@ def move_along_path_greedy(coordinates, obstacles):
             # Movemos el robot la distancia calculada
             robot.straight(step_distance)
             
-        # Luego de llegar a la coordenada objetivo
+        # Luego de llegar a la coordenada objetivo se espera un poco
         wait(1000)
         #Cierra la reja
         servo_motor.run_angle(150, -80)
@@ -271,9 +351,11 @@ def move_along_path_greedy(coordinates, obstacles):
     #full_path.extend(path)
 
     return full_path
+#################################################
 
-
-#################################--Main--#####################################################
+#################################################
+##----------------- main ----------------------##
+#################################################
 
 SERVER = 'Master'
 
@@ -311,7 +393,7 @@ while True:
         print(obstacles)
         print('\n')
 
-        margin = 10
+        margin = 13
         expanded_obstacles = expand_obstacles(obstacles, margin)
         
         full_path = move_along_path_greedy(coordinates, expanded_obstacles)
