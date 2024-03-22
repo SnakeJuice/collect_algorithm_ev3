@@ -54,6 +54,7 @@ def string_to_coordinates(string, is_obstacle=False):
         coords.append((x, y))
     return coords
 
+
 def expand_obstacle(obstacle, margin):
     x, y = obstacle
     expanded = []
@@ -67,6 +68,7 @@ def expand_obstacles(obstacles, margin):
     for obstacle in obstacles:
         expanded.extend(expand_obstacle(obstacle, margin))
     return expanded
+
 
 #Mejor heuristica para movimientos en 4 direcciones
 def distance(point1, point2):
@@ -122,7 +124,7 @@ def a_star(start, goal, obstacles):
 
             # Calcula el costo tentativo del vecino a través del nodo actual
             dx, dy = neighbor[0] - current[0], neighbor[1] - current[1]
-            tentative_g = g[current] + math.sqrt(dx**2 + (dy/17)**2)  # El costo de moverse a un vecino es siempre 1
+            tentative_g = g[current] + math.sqrt(dx**2 + (dy/17)**2)  # El costo de moverse a un vecino 
 
             # Si el vecino no está en la lista abierta o el costo tentativo es menor que el costo actual
             # actualiza el mapa de costos y agrega el vecino a la lista abierta
@@ -155,9 +157,8 @@ def two_opt(coordinates):
             for j in range(i + 1, n):
                 # Si intercambiar las ciudades i y j resulta en una ruta más corta, haz el intercambio
                 if dist[route[i-1]][route[j]] + dist[route[i]][route[(j+1)%n]] < dist[route[i-1]][route[i]] + dist[route[j]][route[(j+1)%n]]:
-                    #if i != j and dist[route[i-1]][route[j]] + dist[route[i]][route[(j+1)%n]] < dist[route[i-1]][route[i]] + dist[route[j]][route[(j+1)%n]]:
-                        route[i:j+1] = list(reversed(route[i:j+1]))
-                        improvement = True
+                    route[i:j+1] = list(reversed(route[i:j+1]))
+                    improvement = True
 
     # Devuelve las coordenadas en el orden de la ruta óptima
     return [coordinates[i] for i in route]
@@ -171,6 +172,15 @@ def move_along_path_greedy(coordinates, obstacles):
     visited_coordinates = [current_position]
     # Ordena las coordenadas con el algoritmo de 2-opt
     coordinates = two_opt(coordinates)
+    
+    # Direcciones posibles
+    RIGHT = 0 # Derecha
+    UP = 1  # Arriba
+    LEFT = 2 # Izquierda
+    DOWN = 3 # Abajo
+    
+    # Inicializa la dirección actual del robot
+    current_direction = RIGHT
 
     while len(visited_coordinates) < len(coordinates) + 1:
         # Encuentra la coordenada no visitada más cercana
@@ -190,26 +200,18 @@ def move_along_path_greedy(coordinates, obstacles):
         print(path)
         print('\n')
 
-        # Direcciones posibles
-        RIGHT = 0 # Derecha
-        UP = 1  # Arriba
-        LEFT = 2 # Izquierda
-        DOWN = 3 # Abajo
-
-        # Inicializa la dirección actual del robot
-        current_direction = RIGHT
-
         #Abre la reja
-        servo_motor.run_angle(150, 90)
+        servo_motor.run_angle(150, 80)
 
         # Para cada paso en el camino
-        for i in range(len(full_path) - 1):
+        for i in range(len(path) - 1):
             # Obtiene las coordenadas del paso actual y el próximo paso
-            current_x, current_y = full_path[i]
-            next_x, next_y = full_path[i + 1]
+            current_x, current_y = path[i]
+            next_x, next_y = path[i + 1]
             
             # Inicializamos la próxima dirección a None
             next_direction = None
+            
             # Calculamos la diferencia en X y Y entre el paso actual y el próximo paso
             dx = next_x - current_x
             dy = next_y - current_y
@@ -240,21 +242,15 @@ def move_along_path_greedy(coordinates, obstacles):
                 # Gira a la derecha
                 robot.turn(90)
             
-            
             # Si el robot debe subir o bajar en el eje Y
+            # Se le da un pequeño empujon
             if current_x == next_x and current_y != next_y:
-                # Mueve el robot en incrementos de 17 cm en el eje Y
                 dist = math.ceil(dy / 17) * 30
-                print("Dist: ",dist)
-                robot.straight(abs(dist)) # Avanza dy/17 * 17 cm hacia arriba
-            
+                #print("Dist: ",dist)
+                robot.straight(abs(dist))
         
             # Actualiza la dirección actual del robot a la próxima dirección
             current_direction = next_direction
-
-            # Mueve el robot al próximo paso
-            dx = full_path[i+1][0] - full_path[i][0]
-            dy = full_path[i+1][1] - full_path[i][1]
             
             # Calculamos la distancia al próximo paso
             step_distance = math.sqrt(dx**2 + dy**2) * 10  # cada unidad es mm
@@ -265,10 +261,7 @@ def move_along_path_greedy(coordinates, obstacles):
         # Luego de llegar a la coordenada objetivo
         wait(1000)
         #Cierra la reja
-        servo_motor.run_angle(150, -90)
-        
-        # Después de llegar a la coordenada objetivo, avanza 10 cm
-        #robot.straight(100)
+        servo_motor.run_angle(150, -80)
 
     # Al finalizar el recorrido encuentra el camino de regreso al punto de inicio
     #path = a_star(current_position, start_position, obstacles)
@@ -312,7 +305,7 @@ while True:
         #robot.straight(100)
         
         coordinates = string_to_coordinates(rojos)
-        obstacles = string_to_coordinates(verdes, is_obstacle=True)
+        obstacles = string_to_coordinates(verdes)
 
         print(coordinates)
         print(obstacles)
