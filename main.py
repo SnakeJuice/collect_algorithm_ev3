@@ -37,7 +37,7 @@ servo_motor = Motor(Port.C)
 
 # SETTINGS RECOLECTOR
 robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=140)
-robot.settings(70,150,50,50)
+robot.settings(straight_speed = 50, straight_acceleration = 100, turn_rate= 50, turn_acceleration = 50)
 
 """
     Convierte coordenadas en formato string en una lista de tuplas.
@@ -110,7 +110,7 @@ def expand_obstacles(obstacles, margin):
         int: La distancia de Manhattan entre los dos puntos.
 """
 def distance(point1, point2):
-    return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
+    return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
 #################################################
 
 """
@@ -281,7 +281,7 @@ def move_along_path_greedy(coordinates, obstacles):
         print('\n')
 
         #Abre la reja
-        servo_motor.run_angle(150, 80)
+        servo_motor.run_angle(150, 50)
 
         # Para cada paso en el camino
         for i in range(len(path) - 1):
@@ -348,12 +348,12 @@ def move_along_path_greedy(coordinates, obstacles):
         # Luego de llegar a la coordenada objetivo se espera un poco
         wait(1000)
         #Cierra la reja
-        servo_motor.run_angle(150, -70)
+        servo_motor.run_angle(150, -50)
 
-    # Al finalizar el recorrido encuentra el camino de regreso al punto de inicio
-    #path = a_star(current_position, start_position, obstacles)
+    # Al finalizar el recorrido que vaya a la posición (9,136)
+    #path = a_star(current_position, (9,136), obstacles)
     #if path is None:
-    #    print("No se encontró un camino de regreso al inicio")
+    #    print("No se encontró un camino a (9,136)")
     #    return
     #full_path.extend(path)
 
@@ -403,6 +403,9 @@ while True:
         margin = 15
         expanded_obstacles = expand_obstacles(obstacles, margin)
         
+        wait(5000)
+        ev3.speaker.beep()
+        wait(1000)
         full_path = move_along_path_greedy(coordinates, expanded_obstacles)
         #print(full_path)
     rbox.send('termine')
