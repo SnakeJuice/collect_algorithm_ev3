@@ -311,21 +311,23 @@ def move_along_path_greedy(coordinates, obstacles):
                 next_direction = DOWN
             #print("Próxima dirección: ", next_direction)
 
-            ev3.screen.print("dir ", current_direction)
             # Calculamos el ángulo de giro comparando la próxima dirección con la dirección actual del robot
             turn_angle = (next_direction - current_direction) % 4
             # Si en el extraño caso de que el ángulo de giro sea 2, el robot debe dar la vuelta
             if turn_angle == 2:
                 # Da la vuelta
                 robot.turn(180)
+                wait(10000)
             # Si el ángulo de giro es 1, el robot debe girar a la izquierda
             if turn_angle == 1:
                 # Gira a la izquierda
                 robot.turn(-90)
+                wait(10000)
             # Si el ángulo de giro es 3, el robot debe girar a la derecha
             elif turn_angle == 3:
                 # Gira a la derecha
                 robot.turn(90)
+                wait(10000)
             
             '''
             # Si el robot debe subir o bajar en el eje Y
@@ -345,7 +347,7 @@ def move_along_path_greedy(coordinates, obstacles):
             # Movemos el robot la distancia calculada
             robot.straight(step_distance)
             
-        # Luego de llegar a la coordenada objetivo se espera un poco
+        # Luego de llegar a la coordenada objetivo se espera 1 segundo
         wait(1000)
         #Cierra la reja
         servo_motor.run_angle(150, -50)
