@@ -100,14 +100,14 @@ def expand_obstacles(obstacles, margin):
 #################################################
 
 """
-    Calcula la distancia de Manhattan entre dos puntos.
+    Calcula la distancia de Euclidiana entre dos puntos.
     
     Parámetros:
         point1 (tuple): El primer punto.
         point2 (tuple): El segundo punto.
         
     Devuelve:
-        int: La distancia de Manhattan entre los dos puntos.
+        int: La distancia Euclidiana entre los dos puntos.
 """
 def distance(point1, point2):
     return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
