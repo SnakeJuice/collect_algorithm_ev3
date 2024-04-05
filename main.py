@@ -37,7 +37,7 @@ servo_motor = Motor(Port.C)
 
 # SETTINGS RECOLECTOR
 robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=140)
-robot.settings(straight_speed = 50, straight_acceleration = 100, turn_rate= 50, turn_acceleration = 50)
+robot.settings(straight_speed = 40, straight_acceleration = 100, turn_rate= 40, turn_acceleration = 40)
 
 """
     Convierte coordenadas en formato string en una lista de tuplas.
@@ -77,10 +77,25 @@ def expand_obstacle(obstacle, margin):
     x, y = obstacle
     expanded = []
     for dx in range(-margin, margin+1):
-        for dy in range(-margin, margin+1):
-            expanded.append((x+dx, y+dy))
+        #for dy in range(-margin, margin+1):
+            expanded.append((x+dx, y))
     return expanded
 #################################################
+"""
+def adjust_coordinates(coordinates):
+    for i, (x, y) in enumerate(coordinates):
+        if y == 100:
+            coordinates[i] = (x - 10, y)
+        if y == 80:
+            coordinates[i] = (x - 10, y)
+        if y == 60:
+            coordinates[i] = (x - 10, y)
+        if y == 40:
+            coordinates[i] = (x - 10, y)
+        if y == 20:
+            coordinates[i] = (x - 10, y)
+    return coordinates
+"""
 
 """
     Expande todos los obstáculos en una lista por un margen dado.
@@ -125,9 +140,9 @@ def distance(point1, point2):
 def get_neighbors(node):
     x, y = node
     # Vecinos a la izquierda, derecha, arriba y abajo
-    neighbors = [(x-1, y), (x+1, y), (x, y-17), (x, y+17)]
-    # Elimina los vecinos que están por debajo de y=17
-    neighbors = [(x, y) for x, y in neighbors if y >= 17]
+    neighbors = [(x-1, y), (x+1, y), (x, y-20), (x, y+20)]
+    # Elimina los vecinos que están por debajo de y=20
+    neighbors = [(x, y) for x, y in neighbors if y >= 20 and x >= 0]
     return neighbors
 #################################################
 
@@ -182,7 +197,7 @@ def a_star(start, goal, obstacles):
 
             # Calcula el costo tentativo del vecino a través del nodo actual
             dx, dy = neighbor[0] - current[0], neighbor[1] - current[1]
-            tentative_g = g[current] + math.sqrt(dx**2 + (dy/17)**2)  # El costo de moverse a un vecino
+            tentative_g = g[current] + math.sqrt(dx**2 + (dy/20)**2)  # El costo de moverse a un vecino
 
             # Si el vecino no está en la lista abierta o el costo tentativo es menor que el costo actual
             # actualiza el mapa de costos y agrega el vecino a la lista abierta
@@ -245,7 +260,7 @@ def two_opt(coordinates):
 # Complejidad O(n^3 * m) VERIFICAR SI ESTA CORRECTO
 # n = coordenadas, m = longitud promedio del camino de A*
 def move_along_path_greedy(coordinates, obstacles):
-    start_position = (0,17)
+    start_position = (0,20)
     current_position = start_position
     full_path = []
     visited_coordinates = [current_position]
@@ -270,7 +285,7 @@ def move_along_path_greedy(coordinates, obstacles):
         # Encuentra el camino más corto a la coordenada más cercana
         path = a_star(current_position, closest, obstacles)
         if path is None:
-            print("No se encontró un camino a ",{closest[0]},{closest[1]})
+            print("No se encontro un camino a ",{closest[0]},{closest[1]})
             return
         full_path.extend(path)
         current_position = closest
@@ -279,7 +294,7 @@ def move_along_path_greedy(coordinates, obstacles):
         print("Camino a : {}, {}".format(closest[0], closest[1]))
         print(path)
         print('\n')
-
+        
         #Abre la reja
         servo_motor.run_angle(150, 50)
 
@@ -316,27 +331,27 @@ def move_along_path_greedy(coordinates, obstacles):
             # Si en el extraño caso de que el ángulo de giro sea 2, el robot debe dar la vuelta
             if turn_angle == 2:
                 # Da la vuelta
-                robot.turn(180)
-                wait(10000)
+                robot.turn(177)
+                #wait(10000)
             # Si el ángulo de giro es 1, el robot debe girar a la izquierda
             if turn_angle == 1:
                 # Gira a la izquierda
-                robot.turn(-90)
-                wait(10000)
+                robot.turn(-87)
+                #wait(10000)
             # Si el ángulo de giro es 3, el robot debe girar a la derecha
             elif turn_angle == 3:
                 # Gira a la derecha
-                robot.turn(90)
-                wait(10000)
+                robot.turn(87)
+                #wait(10000)
             
-            '''
+            
             # Si el robot debe subir o bajar en el eje Y
             # Se le da un pequeño empujon
             if current_x == next_x and current_y != next_y:
-                dist = math.ceil(dy / 17) * 30
+                dist = math.ceil(dy / 20) * 50
                 #print("Dist: ",dist)
                 robot.straight(abs(dist))
-            '''
+            
         
             # Actualiza la dirección actual del robot a la próxima dirección
             current_direction = next_direction
@@ -347,10 +362,12 @@ def move_along_path_greedy(coordinates, obstacles):
             # Movemos el robot la distancia calculada
             robot.straight(step_distance)
             
-        # Luego de llegar a la coordenada objetivo se espera 1 segundo
-        wait(1000)
         #Cierra la reja
         servo_motor.run_angle(150, -50)
+            
+        # Luego de llegar a la coordenada objetivo se espera 1 segundo
+        wait(1000)
+        
 
     # Al finalizar el recorrido que vaya a la posición (9,136)
     #path = a_star(current_position, (9,136), obstacles)
@@ -397,12 +414,14 @@ while True:
         
         coordinates = string_to_coordinates(rojos)
         obstacles = string_to_coordinates(verdes)
+        
+        #obstacles = adjust_coordinates(obstacles)
 
         print(coordinates)
         print(obstacles)
         print('\n')
 
-        margin = 15
+        margin = 17
         expanded_obstacles = expand_obstacles(obstacles, margin)
         
         wait(5000)
