@@ -334,7 +334,7 @@ def move_along_path_greedy(coordinates, obstacles):
                 robot.turn(177)
                 #wait(10000)
             # Si el ángulo de giro es 1, el robot debe girar a la izquierda
-            if turn_angle == 1:
+            elif turn_angle == 1:
                 # Gira a la izquierda
                 robot.turn(-87)
                 #wait(10000)
