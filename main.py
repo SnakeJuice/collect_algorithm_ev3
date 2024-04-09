@@ -142,7 +142,7 @@ def get_neighbors(node):
     # Vecinos a la izquierda, derecha, arriba y abajo
     neighbors = [(x-1, y), (x+1, y), (x, y-20), (x, y+20)]
     # Elimina los vecinos que están por debajo de y=20
-    neighbors = [(x, y) for x, y in neighbors if y >= 20 and x >= 0]
+    neighbors = [(x, y) for x, y in neighbors if y >= 20 and x >= -17]
     return neighbors
 #################################################
 
@@ -215,39 +215,6 @@ def a_star(start, goal, obstacles):
 #################################################
 
 """
-    Implementa el algoritmo 2-opt para mejorar una ruta.
-    
-    Parámetros:
-        coordinates (list): Una lista de tuplas que representan la ruta.
-        
-    Devuelve:
-        list: Una lista de tuplas que representan la ruta optimizada.
-"""
-# Complejidad O(n^2)
-# n = numero de coordenadas
-def two_opt(coordinates):
-    # Calcula la matriz de distancias
-    n = len(coordinates)
-    dist = [[distance(coordinates[i], coordinates[j]) for j in range(n)] for i in range(n)]
-
-    # Inicializa la ruta con el orden de las coordenadas
-    route = list(range(n))
-    
-    improvement = True
-    while improvement:
-        improvement = False
-        for i in range(1, n - 1):
-            for j in range(i + 1, n):
-                # Si intercambiar las "ciudades" i y j resulta en una ruta más corta, haz el intercambio
-                if dist[route[i-1]][route[j]] + dist[route[i]][route[(j+1)%n]] < dist[route[i-1]][route[i]] + dist[route[j]][route[(j+1)%n]]:
-                    route[i:j+1] = list(reversed(route[i:j+1]))
-                    improvement = True
-
-    # Devuelve las coordenadas en el orden de la ruta óptima
-    return [coordinates[i] for i in route]
-#################################################
-
-"""
     Implementa un algoritmo codicioso para moverse a lo largo de un camino en una cuadrícula con obstáculos.
     
     Parámetros:
@@ -260,13 +227,10 @@ def two_opt(coordinates):
 # Complejidad O(n^3 * m) VERIFICAR SI ESTA CORRECTO
 # n = coordenadas, m = longitud promedio del camino de A*
 def move_along_path_greedy(coordinates, obstacles):
-    start_position = (0,20)
+    start_position = (-17,20)
     current_position = start_position
     full_path = []
     visited_coordinates = [current_position]
-    
-    # Ordena las coordenadas con el algoritmo de 2-opt
-    coordinates = two_opt(coordinates)
     
     # Direcciones posibles
     RIGHT = 0 # Derecha
@@ -332,17 +296,23 @@ def move_along_path_greedy(coordinates, obstacles):
             if turn_angle == 2:
                 # Da la vuelta
                 robot.turn(177)
-                #wait(10000)
+                wait(10000)
+                ev3.speaker.beep()
+                wait(2000)
             # Si el ángulo de giro es 1, el robot debe girar a la izquierda
             elif turn_angle == 1:
                 # Gira a la izquierda
                 robot.turn(-87)
-                #wait(10000)
+                wait(10000)
+                ev3.speaker.beep()
+                wait(2000)
             # Si el ángulo de giro es 3, el robot debe girar a la derecha
             elif turn_angle == 3:
                 # Gira a la derecha
                 robot.turn(87)
-                #wait(10000)
+                wait(10000)
+                ev3.speaker.beep()
+                wait(2000)
             
             
             # Si el robot debe subir o bajar en el eje Y
@@ -369,12 +339,13 @@ def move_along_path_greedy(coordinates, obstacles):
         wait(1000)
         
 
-    # Al finalizar el recorrido que vaya a la posición (9,136)
-    #path = a_star(current_position, (9,136), obstacles)
+    # Al finalizar el recorrido que vaya a la posición inicial
+    #path = a_star(current_position, start_position, obstacles)
     #if path is None:
-    #    print("No se encontró un camino a (9,136)")
+    #    print("No se encontró un camino a la posición inicial")
     #    return
     #full_path.extend(path)
+    
 
     return full_path
 #################################################
@@ -424,7 +395,7 @@ while True:
         margin = 17
         expanded_obstacles = expand_obstacles(obstacles, margin)
         
-        wait(5000)
+        wait(2000)
         ev3.speaker.beep()
         wait(1000)
         full_path = move_along_path_greedy(coordinates, expanded_obstacles)
