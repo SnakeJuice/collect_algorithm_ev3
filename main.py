@@ -142,7 +142,7 @@ def get_neighbors(node):
     # Vecinos a la izquierda, derecha, arriba y abajo
     neighbors = [(x-1, y), (x+1, y), (x, y-20), (x, y+20)]
     # Elimina los vecinos que están por debajo de y=20
-    neighbors = [(x, y) for x, y in neighbors if y >= 20 and x >= -17]
+    neighbors = [(x, y) for x, y in neighbors if y >= 20 and x >= -19]
     return neighbors
 #################################################
 
@@ -227,7 +227,7 @@ def a_star(start, goal, obstacles):
 # Complejidad O(n^3 * m) VERIFICAR SI ESTA CORRECTO
 # n = coordenadas, m = longitud promedio del camino de A*
 def move_along_path_greedy(coordinates, obstacles):
-    start_position = (-17,20)
+    start_position = (-19,20)
     current_position = start_position
     full_path = []
     visited_coordinates = [current_position]
